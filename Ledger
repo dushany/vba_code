@@ -1,0 +1,91 @@
+Private Function FindLastRow(ByRef tbl As ListObject) As Integer
+'================================================================================================
+'Identifies the last row in an Excel Dynamic Table. The Table reference is
+'passed to the function and evaluated to find the last row with data in it (evaluation is based
+'on data in column 1). If the there are no rows left, the function creates a new row and return
+'the row count for the Excel Table.
+'================================================================================================
+
+Dim myLoop As Integer
+
+    With tbl
+        
+        For myLoop = 1 To .DataBodyRange.Rows.count
+            
+            If IsEmpty(.DataBodyRange(myLoop, 1)) Or .DataBodyRange(myLoop, 1) = "" Then
+                FindLastRow = myLoop
+                Exit For
+            ElseIf myLoop = .DataBodyRange.Rows.count Then
+                tbl.ListRows.Add
+                FindLastRow = tbl.ListRows.count
+                Exit For
+            End If
+            
+        Next myLoop
+        
+    End With
+
+End Function
+
+Private Sub deleteRows(ByRef tbl As ListObject)
+'================================================================================================
+'Deletes all rows from Table
+'================================================================================================
+    tbl.DataBodyRange.Rows(1).ClearContents
+    tbl.DataBodyRange.Offset(1, 0).Resize(tbl.DataBodyRange.Rows.count - 1, _
+    tbl.DataBodyRange.Columns.count).Rows.Delete
+
+End Sub
+
+Sub getSumLines()
+'=================================================================================================
+'Copies journal lines from the journal summary table to ledger account report
+'=================================================================================================
+
+On Error Resume Next
+
+
+Dim x, r As Integer
+Dim lastRow As Integer
+Dim sumLines As ListObject
+Dim ledgerLines As ListObject
+
+Set sumLines = Sheet1.ListObjects("Table1")
+Set ledgerLines = Sheet3.ListObjects("Table2")
+
+Sheet3.Unprotect Password:=Sheet2.Range("B1")
+    Application.ScreenUpdating = False
+    deleteRows tbl:=ledgerLines
+    
+                
+                For r = 1 To sumLines.ListRows.count
+                    
+                    If sumLines.DataBodyRange(r, 5) = Sheet3.Range("$B$9") Then
+                          x = FindLastRow(ledgerLines)
+                        
+                            With ledgerLines
+                                .DataBodyRange(x, 1) = sumLines.DataBodyRange(r, 2)
+                                .DataBodyRange(x, 2) = sumLines.DataBodyRange(r, 3)
+                                .DataBodyRange(x, 3) = sumLines.DataBodyRange(r, 4)
+                                .DataBodyRange(x, 4) = sumLines.DataBodyRange(r, 7)
+                                .DataBodyRange(x, 5) = sumLines.DataBodyRange(r, 8)
+                                .DataBodyRange(x, 6) = sumLines.DataBodyRange(r, 9)
+                                If x = 1 Then
+                                    .DataBodyRange(x, 7) = Sheet3.Range("$H$9") + (.DataBodyRange(x, 5) + .DataBodyRange(x, 6))
+                                    
+                                Else
+                                    .DataBodyRange(x, 7) = .DataBodyRange(x - 1, 7) + (.DataBodyRange(x, 5) + .DataBodyRange(x, 6))
+                                End If
+                            End With
+                            
+                    End If
+                    
+                Next r
+                
+                lastRow = ledgerLines.TotalsRowRange.Row
+                ActiveSheet.PageSetup.PrintArea = "$A$1:$I$" & lastRow
+    
+    Application.ScreenUpdating = True
+Sheet3.Protect Password:=Sheet2.Range("B1")
+
+End Sub
