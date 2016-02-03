@@ -1,0 +1,22 @@
+
+<?xml version="1.0"?>
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui"> 
+  <ribbon startFromScratch="false"> 
+    <tabs> 
+      <tab label="Journal Entry" id="CustomTab">
+        <group label="Configuration" id="SetupControls"> 
+          <button label="Setup" id="SetupBtn" onAction="Sheet1.SetupBtn" size="large" imageMso="ControlsGallery"/> 
+        </group> 
+        <group label="Journal Lines" id="JournalLines"> 
+          <button label="Add Line" id="AddLine" onAction="Sheet1.AddLineBtn" size="large" imageMso="OutlineExpand"/> 
+          <button label="Add Lines" id="AddLines" onAction="Sheet1.AddLinesBtn" size="large" imageMso="RecordsExpandAllSubdatasheets"/> 
+          <button label="Delete Line" id="DeleteLine" onAction="Sheet1.DeleteLineBtn" size="large" imageMso="OutlineCollapse"/> 
+          <button label="Delete Lines" id="DeleteLines" onAction="Sheet1.DeleteLinesBtn" size="large" imageMso="RecordsCollapseAllSubdatasheets"/> 
+        </group> 
+        <group label="Post Journals" id="PostJournals"> 
+          <button label="Post Journal" id="PostJournalBtn" onAction="Sheet1.PostJournalBtn" size="large" imageMso="AccessListTasks"/> 
+        </group> 
+      </tab> 
+    </tabs> 
+  </ribbon> 
+</customUI>
