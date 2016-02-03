@@ -1,0 +1,138 @@
+Private Function InputBoxValidation(inputReturn As String) As Integer
+'================================================================================================
+'Validates user input. Input from user is passed to the function and
+'validated to ensure it is a numeric value and an integer. If the value is validated, it is
+'returned to the event or procedure that called it.
+'================================================================================================
+
+On Error Resume Next
+
+
+    If inputReturn = vbNullString Then
+    
+        'action if user clicks cancel
+        Exit Function
+        
+    Else
+        
+        'procedure to check if input is numeric
+        If IsNumeric(inputReturn) Then
+            
+            'procedure to check if input is a whole number
+            If Val(inputReturn) <> Int(inputReturn) Then
+                getError (10)
+                
+            Else
+                InputBoxValidation = Val(inputReturn)
+            End If
+        
+        Else
+            getError (20)
+            
+        End If
+        
+    End If
+    
+End Function
+
+Private Sub AddLines(myLoop As Integer)
+'===================================================================================================
+'Adds a row, or user specified amount of rows, to the Journal Entry template.
+'The procedure adds line(s) to the end of the table and refocuses the print area.
+'===================================================================================================
+On Error GoTo ErrHandler
+
+Dim xNewRow As ListRow
+Dim xRow As Integer
+Dim num As Integer
+
+    Sheet1.Unprotect Password:=Sheet4.Range("$B$3")
+    For num = 1 To myLoop
+        If num < myLoop Then
+            ActiveSheet.ListObjects("Table1").ListRows.Add AlwaysInsert:=True
+        Else
+            
+            Set xNewRow = ActiveSheet.ListObjects("Table1").ListRows.Add(AlwaysInsert:=True)
+            
+            'Find last row and add to the print area
+            xRow = xNewRow.Range.Row
+            ActiveSheet.PageSetup.PrintArea = "$C$1:$H$" & xRow
+                        
+        End If
+    Next num
+
+ErrHandler:
+    Sheet1.Protect Password:=Sheet4.Range("$B$3")
+  
+End Sub
+
+Private Sub DeleteLines(myLoop As Integer)
+'===================================================================================================
+'Deletes a row, or user specified amount of rows, from the Journal Entry template.
+'The procedures deletes the line(s) from the end of the table and refocuses the print area.
+'===================================================================================================
+
+On Error GoTo ErrHandler
+
+    Dim lastRow As Integer
+    Dim num As Integer
+            
+    Sheet1.Unprotect Password:=Sheet4.Range("$B$3")
+    With ActiveSheet.ListObjects("Table1")
+        
+        If .ListRows.count > myLoop + 1 Then
+            For num = 1 To myLoop
+                lastRow = .ListRows.count
+                .ListRows(lastRow).Delete
+            Next num
+        Else
+            getError (30)
+        End If
+        
+    End With
+    
+ErrHandler:
+    Sheet1.Protect Password:=Sheet4.Range("$B$3")
+End Sub
+
+Sub getAddLines(Optional num As Integer)
+'===================================================================================================
+' Public procedure called when clicking the add line or add lines controls on the office ribbon
+'===================================================================================================
+
+On Error Resume Next
+
+    If num = 1 Then
+        AddLines (num)
+    Else
+        Dim inputReturn As String
+      
+        'Input box requesting user feedback
+        inputReturn = InputBox("How many rows would like to add?", "Add Rows", 1)
+        
+        'Validation of user entry and call for adding lines
+        AddLines (InputBoxValidation(inputReturn))
+    End If
+                   
+End Sub
+
+Sub getDeleteLines(Optional num As Integer)
+'===================================================================================================
+' Public procedure called when clicking the delete line or delete lines controls on the office ribbon
+'===================================================================================================
+
+On Error Resume Next
+
+    If num = 1 Then
+        DeleteLines (num)
+    Else
+        Dim inputReturn As String
+
+        'Input box requesting user feedback
+        inputReturn = InputBox("How many rows would like to delete?", "Delete Rows", 1)
+        
+        'Validation of user entry and call for deleting lines
+        DeleteLines (InputBoxValidation(inputReturn))
+    End If
+        
+End Sub
