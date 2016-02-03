@@ -1,0 +1,73 @@
+'****************************************************************************************************
+'Functions and procedures for handling exceptions encountered in the journal entry template
+'
+'Created by: Dushan Yovetich
+'Date: August 2015
+'
+'****************************************************************************************************
+
+Private Function errorHandling(Err As Integer, Optional lnNum As Integer)
+'===================================================================================================
+'Provide error messages for specific exceptions. Function is called by other
+'functions and procedures and a error code is passed to it. The output is a
+'specific error message based on error code.
+'===================================================================================================
+
+Dim errMessage As String
+Dim errTitle As String
+
+    'Repository of error messages
+    Select Case Err
+        
+        Case 10:
+            errMessage = "Entry is not valid. Please enter whole numbers only"
+            errTitle = "Whole Numbers"
+        
+        Case 20:
+            errMessage = "Entry is not valid. Please enter only numbers"
+            errTitle = "Numbers Only"
+        
+        Case 30:
+            errMessage = "Need at least two lines for Journal Entries"
+            errTitle = "Error"
+            
+        Case 40:
+            errMessage = "Journal is not balanced. In order to post, please update the journal."
+            errTitle = "Unbalanced Journal"
+        
+        Case 50:
+            errMessage = "Journal description missing for line " & lnNum & ". Please update the journal entry."
+            errTitle = "Missing Journal Description"
+            
+        Case 60:
+            errMessage = "File to post journal lines to does not exist. Please check configuration " & _
+            "under Setup, or check the file in the Directory."
+            errTitle = "File does not exist"
+        
+        Case 65:
+            errMessage = "CAD Amount in line " & lnNum & " is not a numeric value. Please update the line."
+            errTitle = "CAD Amount"
+            
+        Case 70:
+            errMessage = "There was a problem with the accounting period selected."
+            errTitle = "Accounting Period Error"
+        
+        Case 80:
+            errMessage = "The password you entered is incorrect. Please try again."
+            errTitle = "Incorrect Password"
+            
+    End Select
+    
+    'Display a error message
+    MsgBox errMessage, vbOKOnly, errTitle
+    
+End Function
+
+Sub getError(Err As Integer, Optional lnNum As Integer)
+'===================================================================================================
+'Get method to provide error messages for specific exceptions.
+'===================================================================================================
+
+    errorHandling Err, lnNum
+
+End Sub
