@@ -1,0 +1,84 @@
+Private Function findAccounts(TxtString As String) As Variant()
+'==================================================================================================
+'Loop through the table on the 'GLAccounts' Tab and find accounts associated
+'with the Journal ID passed to it after an Event is triggered. The function returns an array of
+'values once complete which is used to populate the drop down list for accounts in the journal
+'lines.
+'
+'==================================================================================================
+
+Dim tbl As ListObject
+Dim myMatrix() As Variant
+Dim a, x, y As Integer
+Dim jeHeader As String
+Dim PosNum As Integer
+
+
+
+Set tbl = Sheet3.ListObjects("Table2")
+
+    With tbl
+        
+        'initialize array and index
+        ReDim myMatrix(.ListRows.count)
+        a = 1
+        
+        'Check txtString string
+        PosNum = InStr(TxtString, " ")
+        
+        If PosNum = 0 Then
+            jeHeader = TxtString
+        Else
+            If Right(TxtString, Len(TxtString) - PosNum) = "ADJ" Or _
+            Right(TxtString, Len(TxtString) - PosNum) = "CORR" Then
+                jeHeader = Trim(Left(TxtString, PosNum))
+            Else
+                jeHeader = TxtString
+            End If
+        
+        End If
+                
+        'Loop through table
+        For y = 2 To .ListColumns.count
+            If .HeaderRowRange(y) = jeHeader Then
+                For x = 1 To .Range.Rows.count
+                    If .Range(x, y) = "X" Then
+                        myMatrix(a) = .Range(x, 1)
+                        a = a + 1
+                    End If
+                Next x
+            End If
+        Next y
+        
+    End With
+    
+    'Return array
+    findAccounts = myMatrix()
+
+End Function
+
+Sub populateGLDropDown(TxtString As String)
+'===================================================================================================
+'Procedure to populate the dropdown list for the GL Account column in the journal lines table.
+'===================================================================================================
+
+Dim myArray() As Variant
+        
+        myArray = findAccounts(TxtString)
+        
+        Sheet1.Unprotect Password:=Sheet4.Range("$B$3")
+        With Sheet1.ListObjects("Table1").ListColumns(2).DataBodyRange.Validation
+            .Delete
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+            xlBetween, Formula1:=Join(myArray, ",")
+            .IgnoreBlank = True
+            .InCellDropdown = True
+            .InputTitle = ""
+            .ErrorTitle = ""
+            .InputMessage = ""
+            .ErrorMessage = ""
+            .ShowInput = True
+            .ShowError = True
+        End With
+        Sheet1.Protect Password:=Sheet4.Range("$B$3")
+End Sub
