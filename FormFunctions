@@ -1,0 +1,61 @@
+
+Function AcctgDate(acctgPeriod As String) As Date
+'====================================================================================================
+'Used to convert accounting period to accounting date. Accounting period is selected in the
+'JE Setup Form.
+'====================================================================================================
+
+Dim xMonth As String
+
+
+    Select Case acctgPeriod
+        Case "1":
+            xMonth = "31 July"
+        Case "2":
+            xMonth = "31 August"
+        Case "3":
+            xMonth = "30 September"
+        Case "4":
+            xMonth = "31 October"
+        Case "5":
+            xMonth = "30 November"
+        Case "6":
+            xMonth = "31 December"
+        Case "7":
+            xMonth = "31 January"
+        Case "8":
+            xMonth = "28 February"
+        Case "9":
+            xMonth = "31 March"
+        Case "10":
+            xMonth = "30 April"
+        Case "11":
+            xMonth = "31 May"
+        Case "12":
+            xMonth = "30 June"
+        
+        Case Else
+            getError (70)
+    End Select
+
+AcctgDate = CDate(xMonth & " " & Sheet1.Range("$D$3"))
+
+End Function
+
+Function OpenFileDialog() As String
+'==================================================================================================
+'Calls the native Windows open file dialog in order to select the
+'connection file, 'JE Summary'.
+'==================================================================================================
+Dim filePath As String
+Dim fileName As String
+
+
+    Set wb = ThisWorkbook
+    filePath = "C:\Users\yoveticd\OneDrive - Rotary International\TRF(c)\"
+    ChDir (filePath)
+    
+    fileName = Application.GetOpenFilename(FileFilter:="Excel Workbooks (*.xls*),*.xls*", Title:="Open Connection")
+    OpenFileDialog = fileName
+
+End Function
