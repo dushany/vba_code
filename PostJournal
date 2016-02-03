@@ -1,0 +1,151 @@
+Private Function IsFile(ByVal fName As String) As Boolean
+'===================================================================================================
+'Checks whether file exist, or if it's a folder.
+'
+'===================================================================================================
+    On Error Resume Next
+    IsFile = ((GetAttr(fName) And vbDirectory) <> vbDirectory)
+    
+End Function
+
+Private Function FindLastRow(tbl As ListObject) As Integer
+'================================================================================================
+'Identifies the last row in an Excel Dynamic Table. The Table reference is
+'passed to the function and evaluated to find the last row with data in it (evaluation is based
+'on data in column 1). If the there are no rows left, the function creates a new row and return
+'the row count for the Excel Table.
+'================================================================================================
+
+Dim myLoop As Integer
+
+    With tbl
+        
+        For myLoop = 1 To .DataBodyRange.Rows.count
+            
+            If IsEmpty(.DataBodyRange(myLoop, 1)) Or .DataBodyRange(myLoop, 1) = "" Then
+                FindLastRow = myLoop
+                Exit For
+            ElseIf myLoop = .DataBodyRange.Rows.count Then
+                tbl.ListRows.Add
+                FindLastRow = tbl.ListRows.count
+                Exit For
+            End If
+            
+        Next myLoop
+        
+    End With
+
+End Function
+
+Private Function ValidateJournal(tbl As ListObject) As Boolean
+'=================================================================================================
+'Data validation for fields in the journal entry. Evaluates the journal. If journal lines do not
+'conform, an error is generated.
+'=================================================================================================
+
+Dim myLoop As Integer
+
+    'Check that journal is balanced
+    If Round(tbl.TotalsRowRange(4), 2) = 0# Then
+        
+        'Check that all lines with journal entries have journal descriptions
+        For myLoop = 1 To tbl.ListRows.count
+            If tbl.DataBodyRange(myLoop, 2) <> "" Then
+                If IsNumeric(tbl.DataBodyRange(myLoop, 4)) = True Then
+                    If tbl.DataBodyRange(myLoop, 5) <> "" Then
+                        ValidateJournal = True
+                    Else
+                        getError 50, myLoop
+                        ValidateJournal = False
+                        Exit For
+                    End If
+                Else
+                    getError 65, myLoop
+                    ValidateJournal = False
+                    Exit For
+                End If
+            End If
+        Next myLoop
+        
+    Else
+        getError (40)
+        ValidateJournal = False
+    End If
+    
+End Function
+
+Sub PostJournalLines()
+'=================================================================================================
+'Copies journal lines from the journal template to target summary file. Opens the target file and
+'copies the journal lines from the template to the target. The target is then saved and closed.
+'=================================================================================================
+
+On Error Resume Next
+
+
+Dim x, r As Integer
+Dim wb As Workbook
+Dim jrnl As Worksheet
+Dim jrnlLines As ListObject
+Dim jrnlSum As Worksheet
+Dim sumLines As ListObject
+Dim count As Integer
+
+
+Set jrnl = ActiveSheet
+Set jrnlLines = ActiveSheet.ListObjects("Table1")
+Application.ScreenUpdating = False
+Application.EnableEvents = False
+    
+    If ValidateJournal(jrnlLines) = True Then
+    
+        If IsFile(Sheet4.Range("$B$2")) = True Then
+            Set wb = Workbooks.Open(fileName:=Sheet4.Range("$B$2"), Password:=Sheet4.Range("$B$3"))
+                                              
+            ThisWorkbook.Activate
+            
+            Set jrnlSum = wb.Sheets(1)
+            jrnlSum.Unprotect Password:=Sheet4.Range("$B$3")
+            Set sumLines = jrnlSum.ListObjects("Table1")
+            
+            For r = 1 To jrnlLines.DataBodyRange.Rows.count
+                
+                If IsEmpty(jrnlLines.DataBodyRange(r, 2)) = False Or jrnlLines.DataBodyRange(r, 2) <> "" Then
+                    
+                    x = FindLastRow(sumLines)
+                    
+                        With sumLines
+                            .DataBodyRange(x, 1) = Sheet1.Range("$D$4")
+                            .DataBodyRange(x, 2) = Sheet1.Range("$D$5")
+                            .DataBodyRange(x, 3) = Sheet1.Range("$D$6")
+                            .DataBodyRange(x, 4) = jrnlLines.DataBodyRange(r, 1)
+                            .DataBodyRange(x, 5) = jrnlLines.DataBodyRange(r, 2)
+                            .DataBodyRange(x, 6) = jrnlLines.DataBodyRange(r, 3)
+                            .DataBodyRange(x, 7) = jrnlLines.DataBodyRange(r, 5)
+                            If jrnlLines.DataBodyRange(r, 4) >= 0 Then
+                                .DataBodyRange(x, 8) = jrnlLines.DataBodyRange(r, 4)
+                            Else
+                                .DataBodyRange(x, 9) = jrnlLines.DataBodyRange(r, 4)
+                            End If
+                        End With
+                    
+                    count = count + 1
+                    
+                End If
+                
+            Next r
+            jrnlSum.Protect Password:=Sheet4.Range("$B$3")
+            wb.Save
+            wb.Close
+                    
+            Application.ScreenUpdating = True
+            Application.EnableEvents = True
+        
+            Sheet1.Range("$D$8").Value = Environ("username")
+            MsgBox "" & count & " journal lines have been successfully posted.", vbOKOnly
+        Else
+            getError (60)
+        End If
+    End If
+        
+End Sub
